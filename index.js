@@ -6,23 +6,21 @@ const io = new Server(http,{
         origin:"*"
     }
 });
-const users = []
+const rooms = []
 io.on('connection',(socket)=>{
-    const {handshake:{query:{userId}}} = socket;
-    const {id} = socket;
-    const userObj = {userId,id}
-    let isUserExist = users.find(f=>f.userId===userId);
-    if(isUserExist){
-        users.map(m=>{
-            if(m.userId==userId){
-                m.id= id
-            }
-        })
-    }else{
-        users.push(userObj);
-    }
-    console.log(users);
-    console.log('Connected !')
+    socket.on('join-room',(room,user)=>{
+        if(!rooms.find(f=>f.room==room)){
+            let roomObj = {room,...user}
+            rooms.push(roomObj)
+            socket.join(room);
+            console.log(`${user.clientName} has joined room ${room}`)
+        }else{
+            socket.join(room);
+            console.log(`${user.clientName} has joined room ${room}`)
+        }
+        io.to(room).emit('room-joined',user);
+    })
+
     socket.on("message",(message)=>{
        console.log("message:",message)
        if(message){
